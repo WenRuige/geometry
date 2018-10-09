@@ -10,6 +10,10 @@ import (
 	|AB| = sqrt((x1-x2)^2  + (y1-y2)^2)
 	地理坐标点两点之间的距离
     |AB| = sqrt((x1-x2)^2  + (y1-y2)^2) * 1e-6
+	球面上距离计算公式
+    haversin(d/R) = haversin(la2-la1) +cos(la1)cos(la2)haversin(lo2-lo1)
+	haversin(theta)   = sin^2 *(theta/2)
+
 */
 // 平面两点之间距离计算公式
 func pointtopoint(p1 []float64, p2 []float64) float64 {
