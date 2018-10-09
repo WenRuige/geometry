@@ -22,7 +22,7 @@ func pointtopoint(p1 []float64, p2 []float64) float64 {
 
 // 地图坐标系两点之间距离计算公式 返回距离单位(km)  notice:1e-6 = 10 ^(-6)
 func pointtopointgis(p1 []float64, p2 []float64) float64 {
-	return math.Sqrt(math.Pow(p1[0]-p2[0], 2)+math.Pow(p1[1]-p2[1], 2)) * 1e-6
+	return math.Sqrt(math.Pow(p1[0]-p2[0], 2)+math.Pow(p1[1]-p2[1], 2)) * 1e-5
 
 }
 
@@ -46,8 +46,8 @@ func hsin2(theta float64) float64 {
 }
 
 func main() {
-	p1 := []float64{0, 0}
-	p2 := []float64{1, 1}
+	p1 := []float64{34.816988, 113.536474}
+	p2 := []float64{34.830657, 113.550035}
 	res := pointtopoint(p1, p2)
 
 	// 34.816988,113.536474  郑州大学

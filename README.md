@@ -6,7 +6,7 @@
 
 
 
-计算几何相关算法实现
+`golang` 计算几何相关算法实现
 
 
 * [点是否在矩形内](https://github.com/WenRuige/geometry/blob/master/ispointinrect.go)
@@ -14,3 +14,4 @@
 * [点是否在圆内/上](https://github.com/WenRuige/geometry/blob/master/ispointincircle.go)
 * [点是否在多边形内](https://github.com/WenRuige/geometry/blob/master/ispointinpolygon.go)
 * [点到多边形的距离](https://github.com/WenRuige/geometry/blob/master/pointtopolygondistance.go)
+* [两个点之间的距离(平面/地图坐标系)](https://github.com/WenRuige/geometry/blob/master/pointtopoint.go)
