@@ -6,7 +6,7 @@ type Point struct {
 	Y float64
 }
 
-//线段-直线的结构
+//线段-直线的结构@
 
 type lineString struct {
 	a Point
