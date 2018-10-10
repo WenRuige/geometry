@@ -19,7 +19,7 @@
 * 判断两点是否重合 
 * 矢量叉乘 
 * 矢量点乘  
-* 判断点是否在线段上  
+* [判断点是否在线段](https://github.com/WenRuige/geometry/blob/master/ispointinsegments.go) 
 * 求一点饶某点旋转后的坐标 
 * 求矢量夹角   
 * 点与线段的关系 
