@@ -34,8 +34,6 @@ func main() {
 	p2 := base.Point{
 		1, 1,
 	}
-	//p1 := []float64{0, 0}
-	//p2 := []float64{1, 1}
 	res := ispointinsegments(p1, p2, q)
 	fmt.Println(res)
 }
