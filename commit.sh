@@ -9,7 +9,7 @@ if [ -n "$msg" ]; then
    git pull
    git status
    git push origin master
-   echo "完成add、commit、pull，别忘了push"
+   echo "====== 提交完成 ====="
 else
-    echo "请添加注释再来一遍"
+   echo "====== 遗漏注释 ====="
 fi
