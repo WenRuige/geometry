@@ -8,7 +8,4 @@ type Point struct {
 
 //线段-直线的结构@
 
-type lineString struct {
-	a Point
-	b Point
-}
+

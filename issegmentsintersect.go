@@ -1,6 +1,10 @@
 package main
 
-import "github.com/geometry/base"
+import (
+	"github.com/geometry/base"
+	"math"
+	"fmt"
+)
 
 /*
 	判断两条线段是否相交
@@ -10,11 +14,40 @@ import "github.com/geometry/base"
 	1. 线段ab的低点低于cd的高点
 */
 
-func issegmentsintersect(point base.Point) {
-
+func issegmentsintersect(line1 [] base.Point, line2 []base.Point) bool {
+	if (math.Min(line1[0].X, line1[1].X) <= math.Max(line2[0].X, line2[1].X) &&
+		math.Min(line2[0].Y, line2[1].Y) <= math.Max(line1[0].Y, line1[1].Y) &&
+		math.Min(line2[0].X, line2[1].X) <= math.Max(line1[0].X, line1[1].X) &&
+		math.Min(line1[0].Y, line1[1].Y) <= math.Max(line2[0].Y, line2[1].Y)) {
+		return true
+	}
+	return false
 }
 
 func main() {
-	issegmentsintersect()
+
+	var line1 [] base.Point
+	var line2 []base.Point
+	point1 := base.Point{
+		0, 0,
+	}
+	point2 := base.Point{
+		2, 2,
+	}
+
+	line1 = append(line1, point1)
+	line1 = append(line1, point2)
+
+	point3 := base.Point{
+		0, 1,
+	}
+	point4 := base.Point{
+		1, 0,
+	}
+	line2 = append(line2, point3)
+	line2 = append(line2, point4)
+
+	res := issegmentsintersect(line1, line2)
+	fmt.Println(res)
 
 }
