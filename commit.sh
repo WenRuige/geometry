@@ -4,7 +4,7 @@
 
 msg=$1
 if [ -n "$msg" ]; then
-   git add -A
+   git add .
    git commit -m"${msg}"
    git pull
    git status
