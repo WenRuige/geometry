@@ -6,6 +6,7 @@ import (
 
 /*
 	点到一个多边形的距离
+	实际上是点到线段的距离 海伦公式
 */
 
 func Distance(lat1, lon1, lat2, lon2 float64) float64 {
