@@ -16,6 +16,8 @@
 * [点到多边形的距离](https://github.com/WenRuige/geometry/blob/master/pointtopolygondistance.go)
 * [两个点之间的距离(平面/地图坐标系)](https://github.com/WenRuige/geometry/blob/master/pointtopoint.go)
 * [计算多边形的面积]() 
+* [最小外接矩形]
+* 多边形最小外接矩形MBR
 * 判断两点是否重合 
 * 矢量叉乘 
 * 矢量点乘  
