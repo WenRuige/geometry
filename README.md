@@ -79,5 +79,5 @@
 
 
 
-* [生成小格子的办法]()
+* [生成小格子的办法](https://github.com/WenRuige/geometry/blob/master/grid.go)
 
