@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"math"
@@ -14,12 +14,8 @@ type Rectangle struct {
 	MinLng float64
 }
 
-func New() Rectangle {
-	return Rectangle{}
-}
-
 // 生成四个值
-func (r *Rectangle) GetMinRectangle(data [][]float64) Rectangle {
+func GetMinRectangle(data [][]float64) Rectangle {
 	maxLat, maxLng := float64(-1<<32), float64(-1<<32)
 	minLat, minLng := float64(1<<32), float64(1<<32)
 	for _, v := range data {
@@ -29,14 +25,15 @@ func (r *Rectangle) GetMinRectangle(data [][]float64) Rectangle {
 		minLng = math.Min(minLng, v[0])
 
 	}
-	r.MaxLng = maxLng
-	r.MinLng = minLng
-	r.MaxLat = maxLat
-	r.MinLat = minLat
+	r := &Rectangle{
+		MaxLat: maxLat,
+		MinLat: minLat,
+		MaxLng: maxLng,
+		MinLng: minLng,
+	}
 	//r = &rectangle{maxLat: maxLat, minLat: minLat, maxLng: maxLng, minLng: minLat}
 	return *r
 }
-
 
 /*
 
@@ -44,7 +41,7 @@ func (r *Rectangle) GetMinRectangle(data [][]float64) Rectangle {
 */
 
 // 生成经纬度
-func (r *Rectangle) generateLatLng() [][]float64 {
+func GenerateMBRLatLng(r Rectangle) [][]float64 {
 	result := [][]float64{}
 	result = append(result, []float64{r.MaxLng, r.MinLat})
 	result = append(result, []float64{r.MinLng, r.MinLat})
@@ -68,10 +65,11 @@ func generatesJsFile(result [][]float64) string {
 }
 
 func main() {
-	re := [][]float64{{116.304233,39.986398}, {116.449112,39.992589}, {116.493381,39.915599}, {116.33068,39.92224}}
-	obj := New()
-	obj.GetMinRectangle(re)
-	///fmt.Println(obj.generateLatLng())
-	va := generatesJsFile(obj.generateLatLng())
-	fmt.Println(va)
+
+	//re := [][]float64{{116.304233,39.986398}, {116.449112,39.992589}, {116.493381,39.915599}, {116.33068,39.92224}}
+	//obj := New()
+	//obj.GetMinRectangle(re)
+	/////fmt.Println(obj.generateLatLng())
+	//va := generatesJsFile(obj.generateLatLng())
+	//fmt.Println(va)
 }
