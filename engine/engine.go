@@ -7,7 +7,10 @@ import (
 	"os"
 )
 
-//North(北面),NorthEast(东北面),East(东面),SouthEast(东南面),South(南面),SouthWest(西南面),West(西面),NorthWest(西北面)
+// North(北面),NorthEast(东北面)
+// East(东面),SouthEast(东南面)
+// South(南面),SouthWest(西南面)
+// West(西面),NorthWest(西北面)
 const (
 	NORTH     = iota
 	NORTHEAST
@@ -41,8 +44,8 @@ type GridInfo struct {
 // 地理引擎
 type GeographicEngine struct {
 	OriginScope [][]float64 // 原始的商圈
-	MBRScope    [][]float64
-	GridList    []GridInfo
+	MBRScope    [][]float64	// MBR生成的
+	GridList    []GridInfo	// 地块信息
 }
 
 // 基于geohash生成一个多边形的四个顶点
