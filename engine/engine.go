@@ -44,8 +44,8 @@ type GridInfo struct {
 // 地理引擎
 type GeographicEngine struct {
 	OriginScope [][]float64 // 原始的商圈
-	MBRScope    [][]float64	// MBR生成的
-	GridList    []GridInfo	// 地块信息
+	MBRScope    [][]float64 // MBR生成的
+	GridList    []GridInfo  // 地块信息
 }
 
 // 基于geohash生成一个多边形的四个顶点
@@ -120,4 +120,16 @@ func tracefile(str_content string, fileName string) {
 	buf := []byte(fd_content)
 	fd.Write(buf)
 	fd.Close()
+}
+
+/*
+1.多边形与多边形相交
+2.多边形包含多边形
+	a)生成的矩形四个点都在多边形内部
+
+*/
+
+// 校验多边形关系
+func PolygonRelationship(originScope [][]float64, check [][]float64) {
+
 }

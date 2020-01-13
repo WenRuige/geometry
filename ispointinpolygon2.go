@@ -53,14 +53,14 @@ func euqal2(x float64, y float64) bool {
 	return false
 
 }
+
 // 射线法
 func rayCasting(point []float64, vertices [][]float64) string {
 	px := point[0]
 	py := point[1]
 	flag := false
 
-
-	if flag{
+	if flag {
 
 	}
 
@@ -70,22 +70,35 @@ func rayCasting(point []float64, vertices [][]float64) string {
 
 		sx := vertices[i][0]
 		sy := vertices[i][1]
+
 		tx := vertices[j][0]
 		ty := vertices[j][1]
+
+		j=i
 		// 如果点在多边形上面
 		if (sx == px && sy == py) || (tx == px && ty == py) {
 			return "on"
 		}
 		// 判断两个端点是否在射线的两侧
-		if((sy < py && ty >= py) || (sy >= py && ty < py)){
+		if ((sy < py && ty >= py) || (sy >= py && ty < py)) {
 			flag = true
+
+			x := sx + (py-sy)*(tx-sx)/(ty-sy)
+
+			if x == px {
+				return "on"
+			}
+
+			if x > px {
+				flag = !flag
+			}
 		}
+
+
 
 	}
 	return "off"
 }
-
-
 
 /*
 点是否在多边形上实现思路
@@ -97,5 +110,15 @@ func main() {
 
 }
 
+// (sx,xy),(tx,ty)
+// y = kx + b
+
+// 斜截式 y = kx +b  其中k是直线的斜率,b是直线在y轴上的截距.该方程叫做直线的斜截式方程,简称斜截式
+
+// sy = sx * k +b
+// ty = tx * k +b
+
+// => sy - ty = k(sx-tx)
+// => k = (sx-tx)/(sy-ty)
 
 // html-js.com/article/1528
