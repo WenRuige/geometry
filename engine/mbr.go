@@ -64,7 +64,7 @@ func generatesJsFile(result [][]float64) string {
 
 }
 
-func main() {
+//func main() {
 
 	//re := [][]float64{{116.304233,39.986398}, {116.449112,39.992589}, {116.493381,39.915599}, {116.33068,39.92224}}
 	//obj := New()
@@ -72,4 +72,4 @@ func main() {
 	/////fmt.Println(obj.generateLatLng())
 	//va := generatesJsFile(obj.generateLatLng())
 	//fmt.Println(va)
-}
+//}

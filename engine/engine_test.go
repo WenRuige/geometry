@@ -15,3 +15,11 @@ func TestDispatch(t *testing.T) {
 		Dispatch(originScope)
 	})
 }
+
+
+
+func TestCheckIntersection(t *testing.T) {
+	t.Run("", func(t *testing.T) {
+
+	})
+}

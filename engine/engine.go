@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/mmcloughlin/geohash"
+	"fmt"
 	"os"
 )
 
@@ -24,13 +25,13 @@ const (
 
 // geohash 等级
 const (
-	GEO_HASH_LAVEL_0 = iota
-	GEO_HASH_LAVEL_1
-	GEO_HASH_LAVEL_2
-	GEO_HASH_LAVEL_3
-	GEO_HASH_LAVEL_4
-	GEO_HASH_LAVEL_5
-	GEO_HASH_LAVEL_6
+	GEO_HASH_LEVEL_0 = iota
+	GEO_HASH_LEVEL_1
+	GEO_HASH_LEVEL_2
+	GEO_HASH_LEVEL_3
+	GEO_HASH_LEVEL_4
+	GEO_HASH_LEVEL_5
+	GEO_HASH_LEVEL_6
 )
 
 // 地块
@@ -63,14 +64,16 @@ var geographicEngine GeographicEngine
 func Dispatch(originScope [][]float64) {
 	// 0.判断是否是多边形 是否是凸包
 
+	geographicEngine.OriginScope = originScope
 	// 1.生成mbr scope
 	rectangle := GetMinRectangle(originScope)
+
 	// 2.递归生成
 	// 3.递归时候,应该要计算生成的网格是否在多边形内,以及他们的关系
-	GenerateGridList(rectangle.MaxLat, rectangle.MinLng, rectangle.MaxLng, rectangle.MaxLat, GEO_HASH_LAVEL_5)
+	GenerateGridList(rectangle.MaxLat, rectangle.MinLng, rectangle.MaxLng, rectangle.MinLat, GEO_HASH_LEVEL_6)
 
-	GenerateJSString(geographicEngine)
-	//fmt.Println(result)
+	result := GenerateJSString(geographicEngine)
+	fmt.Println(result)
 }
 
 // 递归生成网格列表
@@ -78,14 +81,11 @@ func GenerateGridList(lat, lng float64, maxLng float64, maxLat float64, level in
 	if lat < maxLat {
 		return
 	}
+	//fmt.Println(lat,maxLat)
 	// 1.这里的操作是将传入的初始值,计算成bounding box
 	originGeoHash := geohash.Encode(lat, lng)
-	k := geohash.BoundingBox(originGeoHash[:level])
-
-	gridInfo := GridInfo{
-		Scope: generate(k),
-	}
-	geographicEngine.GridList = append(geographicEngine.GridList, gridInfo)
+	box := geohash.BoundingBox(originGeoHash[:level])
+	PolygonContains(box)
 	// 递归执行
 	recursion(lat, lng, maxLng, level)
 
@@ -100,15 +100,13 @@ func ProduceBoundingBox(lat, lng float64, direction, level int64) geohash.Box {
 	return geohash.BoundingBox(neighbors[direction])
 }
 
+// 横向结构递归执行
 func recursion(lat, lng float64, maxLng float64, level int64) {
 	if lng > maxLng {
 		return
 	}
 	boundingBox := ProduceBoundingBox(lat, lng, EAST, level)
-	gridInfo := GridInfo{
-		Scope: generate(boundingBox),
-	}
-	geographicEngine.GridList = append(geographicEngine.GridList, gridInfo)
+	PolygonContains(boundingBox)
 	lat, lng = boundingBox.Center()
 	recursion(lat, lng, maxLng, level)
 }
@@ -130,6 +128,38 @@ func tracefile(str_content string, fileName string) {
 */
 
 // 校验多边形关系
-func PolygonRelationship(originScope [][]float64, check [][]float64) {
+func PolygonRelationship(Rectangle [][]float64) bool {
+	// 如果四个点都不在的话,则排除
+	flag := 0
+	for _, point := range Rectangle {
+		if !InPolygon(point, geographicEngine.OriginScope) {
+			flag ++
+		}
+	}
+
+	if flag == 4 {
+		return false
+	}
+
+	return true
+}
+
+// 多边形包含
+func PolygonContains(box geohash.Box) {
+	rectangle := generate(box)
+	flag := PolygonRelationship(rectangle)
+	if !flag {
+		return
+	}
+	gridInfo := GridInfo{
+		Scope: rectangle,
+	}
+	geographicEngine.GridList = append(geographicEngine.GridList, gridInfo)
+
+}
+
+
+
+func CheckIntersection(){
 
 }
