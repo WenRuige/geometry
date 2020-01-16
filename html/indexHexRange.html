@@ -49,11 +49,13 @@
     
 
 ]
-        for (i = 0; i <= polygons.length; i++) {
+
+var poly = [[[116.400146484375,39.990234375],[116.38916015625,39.990234375],[116.38916015625,39.9957275390625],[116.400146484375,39.9957275390625]]]
+        for (i = 0; i <= poly.length; i++) {
             var polygon = new AMap.Polygon({
                 map: map,
                 fillOpacity: 0,
-                path: polygons[i],
+                path: poly[i],
                 fillColor: "#f5deb3",
                 fillColor: '#1791fc'
                 

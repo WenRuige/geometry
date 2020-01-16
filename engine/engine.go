@@ -34,6 +34,11 @@ const (
 	GEO_HASH_LEVEL_6
 )
 
+type Point struct {
+	X float64
+	Y float64
+}
+
 // 地块
 type GridInfo struct {
 	Position int64       // 位置
@@ -158,8 +163,51 @@ func PolygonContains(box geohash.Box) {
 
 }
 
+func CheckIntersection(originScope [][]float64, rectangle [][]float64) {
 
+	fmt.Println(len(originScope),len(rectangle))
 
-func CheckIntersection(){
+	for i := 0; i < len(originScope)-1; i++ {
+		j := i + 1
 
+		for ii := 0; i < len(rectangle)-1; ii++ {
+			jj := ii + 1
+
+			lineFirstStart := Point{
+				X: originScope[i][0],
+				Y: originScope[i][1],
+			}
+			lineFirstEnd := Point{
+				X: originScope[j][0],
+				Y: originScope[j][1],
+			}
+			lineSecondStart := Point{
+				X: rectangle[ii][0],
+				Y: rectangle[ii][1],
+			}
+			lineSecondEnd := Point{
+				X: rectangle[jj][0],
+				Y: rectangle[jj][1],
+			}
+
+			result:=GetIntersectionPoint(lineFirstStart, lineFirstEnd, lineSecondStart, lineSecondEnd)
+			fmt.Println(result)
+
+		}
+	}
+
+}
+
+func GetIntersectionPoint(LineFirstStart Point, LineFirstEnd Point, LineSecondStart Point, LineSecondEnd Point) Point {
+	a := (LineFirstEnd.Y - LineFirstStart.Y) / (LineFirstEnd.X - LineFirstStart.X)
+	b := (LineSecondEnd.Y - LineSecondStart.Y) / (LineSecondEnd.X - LineSecondStart.X)
+
+	x := (a*LineFirstStart.X - b*LineSecondStart.X - LineFirstStart.Y + LineSecondStart.Y) / (a - b)
+	y := a*x - a*LineFirstStart.X + LineFirstStart.Y
+
+	point := Point{
+		X: x,
+		Y: y,
+	}
+	return point
 }
