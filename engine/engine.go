@@ -171,10 +171,11 @@ func PolygonContains(box geohash.Box) {
 }
 
 
-// 检查点是否在矩形内
+// 检查内
 func checkPointInRectangle(){
-	// 先判断是否有交点
-	// 有的话看点是否在圈内
+	// 1.先判断是否有交点
+	// 2.有的话看点是否在圈内
+	// 3.在圈内的点和交点就是这个多边形
 
 }
 //
@@ -267,6 +268,7 @@ func GetIntersectionPoint(LineFirstStart Point, LineFirstEnd Point, LineSecondSt
 	}
 	return point, nil
 }
+
 
 func Decimal(value float64) float64 {
 	value, _ = strconv.ParseFloat(fmt.Sprintf("%.6f", value), 64)
