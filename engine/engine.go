@@ -6,6 +6,10 @@ import (
 	"github.com/mmcloughlin/geohash"
 	"fmt"
 	"os"
+
+	"errors"
+	"math"
+	"strconv"
 )
 
 // North(北面),NorthEast(东北面)
@@ -50,16 +54,16 @@ type GridInfo struct {
 // 地理引擎
 type GeographicEngine struct {
 	OriginScope [][]float64 // 原始的商圈
-	MBRScope    [][]float64 // MBR生成的
-	GridList    []GridInfo  // 地块信息
+	MBRScope    Rectangle
+	GridList    []GridInfo // 地块信息
 }
 
 // 基于geohash生成一个多边形的四个顶点
 func generate(new geohash.Box) [][]float64 {
 	result := [][]float64{}
-	result = append(result, []float64{new.MaxLng, new.MinLat})
-	result = append(result, []float64{new.MinLng, new.MinLat})
 	result = append(result, []float64{new.MinLng, new.MaxLat})
+	result = append(result, []float64{new.MinLng, new.MinLat})
+	result = append(result, []float64{new.MaxLng, new.MinLat})
 	result = append(result, []float64{new.MaxLng, new.MaxLat})
 	return result
 }
@@ -72,6 +76,10 @@ func Dispatch(originScope [][]float64) {
 	geographicEngine.OriginScope = originScope
 	// 1.生成mbr scope
 	rectangle := GetMinRectangle(originScope)
+
+	fmt.Println(rectangle)
+
+	geographicEngine.MBRScope = rectangle
 
 	// 2.递归生成
 	// 3.递归时候,应该要计算生成的网格是否在多边形内,以及他们的关系
@@ -86,7 +94,6 @@ func GenerateGridList(lat, lng float64, maxLng float64, maxLat float64, level in
 	if lat < maxLat {
 		return
 	}
-	//fmt.Println(lat,maxLat)
 	// 1.这里的操作是将传入的初始值,计算成bounding box
 	originGeoHash := geohash.Encode(lat, lng)
 	box := geohash.BoundingBox(originGeoHash[:level])
@@ -163,24 +170,29 @@ func PolygonContains(box geohash.Box) {
 
 }
 
-func CheckIntersection(originScope [][]float64, rectangle [][]float64) {
 
-	fmt.Println(len(originScope),len(rectangle))
+// 检查点是否在矩形内
+func checkPointInRectangle(){
+	// 先判断是否有交点
+	// 有的话看点是否在圈内
 
+}
+//
+func CheckIntersection(originScope [][]float64, rectangle [][]float64) [][]float64 {
+	pointList := [][]float64{}
 	for i := 0; i < len(originScope)-1; i++ {
 		j := i + 1
 
-		for ii := 0; i < len(rectangle)-1; ii++ {
+		lineFirstStart := Point{
+			X: originScope[i][0],
+			Y: originScope[i][1],
+		}
+		lineFirstEnd := Point{
+			X: originScope[j][0],
+			Y: originScope[j][1],
+		}
+		for ii := 0; ii < len(rectangle)-1; ii++ {
 			jj := ii + 1
-
-			lineFirstStart := Point{
-				X: originScope[i][0],
-				Y: originScope[i][1],
-			}
-			lineFirstEnd := Point{
-				X: originScope[j][0],
-				Y: originScope[j][1],
-			}
 			lineSecondStart := Point{
 				X: rectangle[ii][0],
 				Y: rectangle[ii][1],
@@ -190,24 +202,73 @@ func CheckIntersection(originScope [][]float64, rectangle [][]float64) {
 				Y: rectangle[jj][1],
 			}
 
-			result:=GetIntersectionPoint(lineFirstStart, lineFirstEnd, lineSecondStart, lineSecondEnd)
-			fmt.Println(result)
-
+			result, _ := GetIntersectionPoint(lineFirstStart, lineFirstEnd, lineSecondStart, lineSecondEnd)
+			// 校验命中的点是否合规
+			point, _ := checkPointRange(result, rectangle)
+			pointList = append(pointList, []float64{point.X, point.Y})
 		}
 	}
+	return pointList
 
 }
 
-func GetIntersectionPoint(LineFirstStart Point, LineFirstEnd Point, LineSecondStart Point, LineSecondEnd Point) Point {
+// 检查交点是否在
+func checkPointRange(point Point, rectangle [][]float64) (*Point, error) {
+
+	// {MaxLat:39.9957275390625 MinLat:39.990234375
+	// MaxLng:116.400146484375 MinLng:116.38916015625}
+	r := GetMinRectangle(rectangle)
+
+	if point.X > r.MaxLng || point.X < r.MinLng || point.Y > r.MaxLat || point.Y < r.MinLat {
+		return &Point{}, nil
+	}
+
+	return &point, nil
+
+}
+
+/*
+* 直线方程L1: ( y - y1 ) / ( y2 - y1 ) = ( x - x1 ) / ( x2 - x1 )
+             * => y = [ ( y2 - y1 ) / ( x2 - x1 ) ]( x - x1 ) + y1
+             * 令 a = ( y2 - y1 ) / ( x2 - x1 )
+
+
+*/
+func GetIntersectionPoint(LineFirstStart Point, LineFirstEnd Point, LineSecondStart Point, LineSecondEnd Point) (Point, error) {
 	a := (LineFirstEnd.Y - LineFirstStart.Y) / (LineFirstEnd.X - LineFirstStart.X)
-	b := (LineSecondEnd.Y - LineSecondStart.Y) / (LineSecondEnd.X - LineSecondStart.X)
+	b := Decimal(LineSecondEnd.Y-LineSecondStart.Y) / Decimal(LineSecondEnd.X-LineSecondStart.X)
+	//fmt.Println(LineFirstStart, LineFirstEnd, LineSecondStart, LineSecondEnd, a, b)
+	// 排除 + 、- Inf
+	if flag := math.IsInf(b, 1); flag {
+		return Point{}, errors.New("error")
+	}
+
+	point := Point{}
+	// math.Abs(b) == 0
+	if math.IsInf(b, -1) {
+		// b的斜率为0
+		x := LineSecondStart.X;
+		y := (LineFirstStart.X-x)*(-a) + LineFirstStart.Y
+		point = Point{
+			X: x,
+			Y: y,
+		}
+		return point, nil
+
+	}
 
 	x := (a*LineFirstStart.X - b*LineSecondStart.X - LineFirstStart.Y + LineSecondStart.Y) / (a - b)
+
 	y := a*x - a*LineFirstStart.X + LineFirstStart.Y
 
-	point := Point{
+	point = Point{
 		X: x,
 		Y: y,
 	}
-	return point
+	return point, nil
+}
+
+func Decimal(value float64) float64 {
+	value, _ = strconv.ParseFloat(fmt.Sprintf("%.6f", value), 64)
+	return value
 }
