@@ -62,9 +62,9 @@ type GeographicEngine struct {
 func generate(new geohash.Box) [][]float64 {
 	result := [][]float64{}
 	result = append(result, []float64{new.MinLng, new.MaxLat})
-	result = append(result, []float64{new.MinLng, new.MinLat})
-	result = append(result, []float64{new.MaxLng, new.MinLat})
 	result = append(result, []float64{new.MaxLng, new.MaxLat})
+	result = append(result, []float64{new.MaxLng, new.MinLat})
+	result = append(result, []float64{new.MinLat, new.MinLng})
 	return result
 }
 
@@ -163,21 +163,48 @@ func PolygonContains(box geohash.Box) {
 	if !flag {
 		return
 	}
-	gridInfo := GridInfo{
-		Scope: rectangle,
+	gridInfo := GridInfo{}
+
+	// 把第一个值塞到array里面
+	rectangle = append(rectangle,rectangle[0])
+	// 检查是否有交点,如果有交点求出改点构成的多边形
+	result := checkPointInRectangle(geographicEngine.OriginScope, rectangle)
+	fmt.Println(result)
+	if len(result) > 0 {
+		gridInfo = GridInfo{
+			Scope: rectangle,
+		}
+	} else {
+		gridInfo = GridInfo{
+			Scope: result,
+		}
 	}
+
 	geographicEngine.GridList = append(geographicEngine.GridList, gridInfo)
 
 }
 
-
 // 检查内
-func checkPointInRectangle(){
+func checkPointInRectangle(originScope [][]float64, rectangle [][]float64) [][]float64 {
 	// 1.先判断是否有交点
 	// 2.有的话看点是否在圈内
 	// 3.在圈内的点和交点就是这个多边形
+	polygon := [][]float64{}
+	pointList := CheckIntersection(originScope, rectangle)
+	if len(pointList) > 0 {
+		polygon = append(polygon, pointList...)
+		// 多边形的四个点是否在矩形内
+		for i := 0; i < len(rectangle); i++ {
+			if flag := InPolygon(rectangle[i], originScope); flag {
+				// 如果命中的话
+				polygon = append(polygon, rectangle[i])
+			}
+		}
 
+	}
+	return polygon
 }
+
 //
 func CheckIntersection(originScope [][]float64, rectangle [][]float64) [][]float64 {
 	pointList := [][]float64{}
@@ -203,10 +230,21 @@ func CheckIntersection(originScope [][]float64, rectangle [][]float64) [][]float
 				Y: rectangle[jj][1],
 			}
 
-			result, _ := GetIntersectionPoint(lineFirstStart, lineFirstEnd, lineSecondStart, lineSecondEnd)
+			result, err := GetIntersectionPoint(lineFirstStart, lineFirstEnd, lineSecondStart, lineSecondEnd)
+
+			if err != nil {
+				continue
+			}
 			// 校验命中的点是否合规
-			point, _ := checkPointRange(result, rectangle)
-			pointList = append(pointList, []float64{point.X, point.Y})
+			if result == nil {
+				continue
+			}
+			point, _ := checkPointRange(*result, rectangle)
+
+			if point != nil {
+				pointList = append(pointList, []float64{point.X, point.Y})
+			}
+
 		}
 	}
 	return pointList
@@ -221,7 +259,7 @@ func checkPointRange(point Point, rectangle [][]float64) (*Point, error) {
 	r := GetMinRectangle(rectangle)
 
 	if point.X > r.MaxLng || point.X < r.MinLng || point.Y > r.MaxLat || point.Y < r.MinLat {
-		return &Point{}, nil
+		return nil, errors.New("error happen")
 	}
 
 	return &point, nil
@@ -235,13 +273,13 @@ func checkPointRange(point Point, rectangle [][]float64) (*Point, error) {
 
 
 */
-func GetIntersectionPoint(LineFirstStart Point, LineFirstEnd Point, LineSecondStart Point, LineSecondEnd Point) (Point, error) {
+func GetIntersectionPoint(LineFirstStart Point, LineFirstEnd Point, LineSecondStart Point, LineSecondEnd Point) (*Point, error) {
 	a := (LineFirstEnd.Y - LineFirstStart.Y) / (LineFirstEnd.X - LineFirstStart.X)
 	b := Decimal(LineSecondEnd.Y-LineSecondStart.Y) / Decimal(LineSecondEnd.X-LineSecondStart.X)
 	//fmt.Println(LineFirstStart, LineFirstEnd, LineSecondStart, LineSecondEnd, a, b)
 	// 排除 + 、- Inf
 	if flag := math.IsInf(b, 1); flag {
-		return Point{}, errors.New("error")
+		return &Point{}, errors.New("error")
 	}
 
 	point := Point{}
@@ -254,7 +292,7 @@ func GetIntersectionPoint(LineFirstStart Point, LineFirstEnd Point, LineSecondSt
 			X: x,
 			Y: y,
 		}
-		return point, nil
+		return &point, nil
 
 	}
 
@@ -266,10 +304,10 @@ func GetIntersectionPoint(LineFirstStart Point, LineFirstEnd Point, LineSecondSt
 		X: x,
 		Y: y,
 	}
-	return point, nil
+	return &point, nil
 }
 
-
+// 取小数点后几位
 func Decimal(value float64) float64 {
 	value, _ = strconv.ParseFloat(fmt.Sprintf("%.6f", value), 64)
 	return value
