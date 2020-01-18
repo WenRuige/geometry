@@ -64,7 +64,12 @@ func generate(new geohash.Box) [][]float64 {
 	result = append(result, []float64{new.MinLng, new.MaxLat})
 	result = append(result, []float64{new.MaxLng, new.MaxLat})
 	result = append(result, []float64{new.MaxLng, new.MinLat})
-	result = append(result, []float64{new.MinLat, new.MinLng})
+	result = append(result, []float64{new.MinLng, new.MinLat})
+
+	//result = append(result, []float64{new.MinLng, new.MaxLat})
+	//result = append(result, []float64{new.MinLng, new.MinLat})
+	//result = append(result, []float64{new.MaxLng, new.MinLat})
+	//result = append(result, []float64{new.MaxLng, new.MaxLat})
 	return result
 }
 
@@ -77,7 +82,7 @@ func Dispatch(originScope [][]float64) {
 	// 1.生成mbr scope
 	rectangle := GetMinRectangle(originScope)
 
-	fmt.Println(rectangle)
+	fmt.Printf("MBR is %v \n", rectangle)
 
 	geographicEngine.MBRScope = rectangle
 
@@ -97,7 +102,7 @@ func GenerateGridList(lat, lng float64, maxLng float64, maxLat float64, level in
 	// 1.这里的操作是将传入的初始值,计算成bounding box
 	originGeoHash := geohash.Encode(lat, lng)
 	box := geohash.BoundingBox(originGeoHash[:level])
-	PolygonContains(box)
+	PolygonContains(box, true)
 	// 递归执行
 	recursion(lat, lng, maxLng, level)
 
@@ -118,7 +123,7 @@ func recursion(lat, lng float64, maxLng float64, level int64) {
 		return
 	}
 	boundingBox := ProduceBoundingBox(lat, lng, EAST, level)
-	PolygonContains(boundingBox)
+	PolygonContains(boundingBox, true)
 	lat, lng = boundingBox.Center()
 	recursion(lat, lng, maxLng, level)
 }
@@ -157,27 +162,36 @@ func PolygonRelationship(Rectangle [][]float64) bool {
 }
 
 // 多边形包含
-func PolygonContains(box geohash.Box) {
+func PolygonContains(box geohash.Box, isOpen bool) {
 	rectangle := generate(box)
+	// 判断矩形的四个点是否都在MBR里面
 	flag := PolygonRelationship(rectangle)
 	if !flag {
 		return
 	}
+
 	gridInfo := GridInfo{}
+	if !isOpen {
+		gridInfo.Scope = rectangle
+		geographicEngine.GridList = append(geographicEngine.GridList, gridInfo)
+		return
+	}
 
 	// 把第一个值塞到array里面
-	rectangle = append(rectangle,rectangle[0])
+	rectangle = append(rectangle, rectangle[0])
 	// 检查是否有交点,如果有交点求出改点构成的多边形
+
 	result := checkPointInRectangle(geographicEngine.OriginScope, rectangle)
-	fmt.Println(result)
+	//str := generatesJs(rectangle)
 	if len(result) > 0 {
-		gridInfo = GridInfo{
-			Scope: rectangle,
-		}
-	} else {
 		gridInfo = GridInfo{
 			Scope: result,
 		}
+	} else {
+		//gridInfo = GridInfo{
+		//	Scope: rectangle,
+		//}
+		return
 	}
 
 	geographicEngine.GridList = append(geographicEngine.GridList, gridInfo)
@@ -193,8 +207,9 @@ func checkPointInRectangle(originScope [][]float64, rectangle [][]float64) [][]f
 	pointList := CheckIntersection(originScope, rectangle)
 	if len(pointList) > 0 {
 		polygon = append(polygon, pointList...)
-		// 多边形的四个点是否在矩形内
-		for i := 0; i < len(rectangle); i++ {
+		// 多边形的四个点是否在矩形内,最后一个点不要判断
+		for i := 0; i < len(rectangle)-1; i++ {
+			//fmt.Println(rectangle[i])
 			if flag := InPolygon(rectangle[i], originScope); flag {
 				// 如果命中的话
 				polygon = append(polygon, rectangle[i])
@@ -202,6 +217,12 @@ func checkPointInRectangle(originScope [][]float64, rectangle [][]float64) [][]f
 		}
 
 	}
+	// 进行一次排序, 小于5判断
+	//if len(polygon) == 4 {
+	//	polygon = sortV2(polygon)
+	//}
+
+	polygon = ClockwiseSortPoints(polygon)
 	return polygon
 }
 
@@ -240,6 +261,7 @@ func CheckIntersection(originScope [][]float64, rectangle [][]float64) [][]float
 				continue
 			}
 			point, _ := checkPointRange(*result, rectangle)
+			//fmt.Println(point)
 
 			if point != nil {
 				pointList = append(pointList, []float64{point.X, point.Y})
@@ -254,11 +276,14 @@ func CheckIntersection(originScope [][]float64, rectangle [][]float64) [][]float
 // 检查交点是否在
 func checkPointRange(point Point, rectangle [][]float64) (*Point, error) {
 
-	// {MaxLat:39.9957275390625 MinLat:39.990234375
-	// MaxLng:116.400146484375 MinLng:116.38916015625}
+	// 116.39401012382888 39.990234375
+	// [116.4111328125 39.9957275390625]
+	// [116.4111328125 39.990234375]
+	// [116.400146484375 39.990234375]
+	// [116.38916015625 39.9957275390625
 	r := GetMinRectangle(rectangle)
-
-	if point.X > r.MaxLng || point.X < r.MinLng || point.Y > r.MaxLat || point.Y < r.MinLat {
+	if point.X > (r.MaxLng )|| point.X < (r.MinLng) || point.Y > (r.MaxLat) || point.Y < (r.MinLat) {
+		//fmt.Println(point,r)
 		return nil, errors.New("error happen")
 	}
 
@@ -278,13 +303,13 @@ func GetIntersectionPoint(LineFirstStart Point, LineFirstEnd Point, LineSecondSt
 	b := Decimal(LineSecondEnd.Y-LineSecondStart.Y) / Decimal(LineSecondEnd.X-LineSecondStart.X)
 	//fmt.Println(LineFirstStart, LineFirstEnd, LineSecondStart, LineSecondEnd, a, b)
 	// 排除 + 、- Inf
-	if flag := math.IsInf(b, 1); flag {
-		return &Point{}, errors.New("error")
-	}
+	//if flag := math.IsInf(b, 1); flag {
+	//	return &Point{}, errors.New("error")
+	//}
 
 	point := Point{}
 	// math.Abs(b) == 0
-	if math.IsInf(b, -1) {
+	if math.IsInf(b, 0) {
 		// b的斜率为0
 		x := LineSecondStart.X;
 		y := (LineFirstStart.X-x)*(-a) + LineFirstStart.Y
@@ -301,14 +326,101 @@ func GetIntersectionPoint(LineFirstStart Point, LineFirstEnd Point, LineSecondSt
 	y := a*x - a*LineFirstStart.X + LineFirstStart.Y
 
 	point = Point{
-		X: x,
-		Y: y,
+		X: Decimal(x),
+		Y: Decimal(y),
 	}
 	return &point, nil
 }
 
 // 取小数点后几位
 func Decimal(value float64) float64 {
-	value, _ = strconv.ParseFloat(fmt.Sprintf("%.6f", value), 64)
+	value, _ = strconv.ParseFloat(fmt.Sprintf("%.12f", value), 64)
 	return value
 }
+
+func sortV2(rectangle [][]float64) [][]float64 {
+	if len(rectangle) != 4 {
+		return [][]float64{}
+	}
+
+	xAverage, yAverage, xSum, ySum := float64(0), float64(0), float64(0), float64(0)
+	newRectangle := [][]float64{}
+
+	for _, value := range rectangle {
+		xSum += value[0]
+		ySum += value[1]
+	}
+	xAverage = xSum / 4
+	yAverage = ySum / 4
+
+	for _, value := range rectangle {
+		if value[0] < xAverage && value[1] < yAverage {
+			newRectangle = append(newRectangle, value)
+		}
+
+	}
+	for _, value := range rectangle {
+		if value[0] > xAverage && value[1] < yAverage {
+			newRectangle = append(newRectangle, value)
+		}
+	}
+	for _, value := range rectangle {
+		if value[0] > xAverage && value[1] > yAverage {
+			newRectangle = append(newRectangle, value)
+		}
+	}
+	for _, value := range rectangle {
+		if value[0] < xAverage && value[1] > yAverage {
+			newRectangle = append(newRectangle, value)
+		}
+	}
+	return newRectangle
+}
+
+/*
+
+
+ public PointF[] SortPointsByClockwise(PointF[] pts_src)
+        {
+            if (pts_src.Length != 4) return null;//确保为四边形
+
+            //求四边形中心点？坐标
+            float x_average = 0;
+            float y_average = 0;
+            float x_sum = 0;
+            float y_sum = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                x_sum += pts_src[i].X;
+                y_sum += pts_src[i].Y;
+            }
+            x_average = x_sum / 4;
+            y_average = y_sum / 4;
+            PointF center = new PointF(x_average, y_average);
+
+            PointF[] result = new PointF[4];
+            for (int i = 0; i < 4; i++)
+            {
+                if (pts_src[i].X < center.X && pts_src[i].Y < center.Y)
+                {
+                    result[0] = pts_src[i];//左上角点
+                }
+                if (pts_src[i].X > center.X && pts_src[i].Y < center.Y)
+                {
+                    result[1] = pts_src[i];//右上角点
+                }
+                if (pts_src[i].X > center.X && pts_src[i].Y > center.Y)
+                {
+                    result[2] = pts_src[i];//右下角点
+                }
+                if (pts_src[i].X < center.X && pts_src[i].Y > center.Y)
+                {
+                    result[3] = pts_src[i];//左下角点
+                }
+            }
+
+            return result;
+
+
+
+*/
