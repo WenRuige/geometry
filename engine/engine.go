@@ -61,10 +61,10 @@ type GeographicEngine struct {
 // 基于geohash生成一个多边形的四个顶点
 func generate(new geohash.Box) [][]float64 {
 	result := [][]float64{}
-	result = append(result, []float64{new.MinLng, new.MaxLat})
-	result = append(result, []float64{new.MaxLng, new.MaxLat})
-	result = append(result, []float64{new.MaxLng, new.MinLat})
-	result = append(result, []float64{new.MinLng, new.MinLat})
+	result = append(result, []float64{Decimal(new.MinLng), Decimal(new.MaxLat)})
+	result = append(result, []float64{Decimal(new.MaxLng), Decimal(new.MaxLat)})
+	result = append(result, []float64{Decimal(new.MaxLng), Decimal(new.MinLat)})
+	result = append(result, []float64{Decimal(new.MinLng), Decimal(new.MinLat)})
 
 	//result = append(result, []float64{new.MinLng, new.MaxLat})
 	//result = append(result, []float64{new.MinLng, new.MinLat})
@@ -180,7 +180,6 @@ func PolygonContains(box geohash.Box, isOpen bool) {
 	// 把第一个值塞到array里面
 	rectangle = append(rectangle, rectangle[0])
 	// 检查是否有交点,如果有交点求出改点构成的多边形
-
 	result := checkPointInRectangle(geographicEngine.OriginScope, rectangle)
 	//str := generatesJs(rectangle)
 	if len(result) > 0 {
@@ -206,10 +205,23 @@ func checkPointInRectangle(originScope [][]float64, rectangle [][]float64) [][]f
 	polygon := [][]float64{}
 	pointList := CheckIntersection(originScope, rectangle)
 	if len(pointList) > 0 {
+		// 判断是否是顶点
+		times := 0
+		for i := 0; i < len(originScope)-1; i++ {
+			if flag := InPolygon(originScope[i], rectangle); flag {
+				times ++
+				fmt.Println(rectangle)
+				fmt.Println(flag,len(pointList))
+			}
+		}
+		// 只有一个交点,并且有个点在四边形内
+		if len(pointList) == 1 && times == 1 {
+			fmt.Println("fuck")
+		}
+
 		polygon = append(polygon, pointList...)
 		// 多边形的四个点是否在矩形内,最后一个点不要判断
 		for i := 0; i < len(rectangle)-1; i++ {
-			//fmt.Println(rectangle[i])
 			if flag := InPolygon(rectangle[i], originScope); flag {
 				// 如果命中的话
 				polygon = append(polygon, rectangle[i])
@@ -217,11 +229,6 @@ func checkPointInRectangle(originScope [][]float64, rectangle [][]float64) [][]f
 		}
 
 	}
-	// 进行一次排序, 小于5判断
-	//if len(polygon) == 4 {
-	//	polygon = sortV2(polygon)
-	//}
-
 	polygon = ClockwiseSortPoints(polygon)
 	return polygon
 }
@@ -261,8 +268,6 @@ func CheckIntersection(originScope [][]float64, rectangle [][]float64) [][]float
 				continue
 			}
 			point, _ := checkPointRange(*result, rectangle)
-			//fmt.Println(point)
-
 			if point != nil {
 				pointList = append(pointList, []float64{point.X, point.Y})
 			}
@@ -282,8 +287,8 @@ func checkPointRange(point Point, rectangle [][]float64) (*Point, error) {
 	// [116.400146484375 39.990234375]
 	// [116.38916015625 39.9957275390625
 	r := GetMinRectangle(rectangle)
-	if point.X > (r.MaxLng )|| point.X < (r.MinLng) || point.Y > (r.MaxLat) || point.Y < (r.MinLat) {
-		//fmt.Println(point,r)
+	if point.X > (r.MaxLng) || point.X < (r.MinLng) || point.Y > (r.MaxLat) || point.Y < (r.MinLat) {
+		//fmt.Println(point, r, point.Y < (r.MinLat))
 		return nil, errors.New("error happen")
 	}
 
