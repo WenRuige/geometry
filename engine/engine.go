@@ -197,6 +197,33 @@ func PolygonContains(box geohash.Box, isOpen bool) {
 
 }
 
+// 检查点是否在线段上
+func checkPointInLine(point []float64, pointA []float64, pointB []float64) bool {
+	//
+	//a:=Decimal((point[0]-pointA[0])* (pointB[1]-pointA[1]))
+	//b:=Decimal((pointB[0]-pointA[0])*(point[1]-pointA[1]))
+	//fmt.Println("a is ",a,b)
+	//
+
+	//fmt.Println("--------", math.Min(pointA[0], pointB[0]), point[0])
+
+	if Decimal((point[0]-pointA[0])*(pointB[1]-pointA[1])) == Decimal((pointB[0]-pointA[0])*(point[1]-pointA[1])) &&
+
+
+		math.Min(pointA[0], pointB[0]) <= point[0] &&
+
+
+		point[0] <= math.Max(pointA[0], pointB[0]) &&
+
+		math.Min(pointA[1], pointB[1]) <= point[1] &&
+		point[1] <= math.Max(pointA[1], pointB[1]) {
+		return true;
+	} else {
+		return false;
+	}
+
+}
+
 // 检查内
 func checkPointInRectangle(originScope [][]float64, rectangle [][]float64) [][]float64 {
 	// 1.先判断是否有交点
@@ -206,25 +233,38 @@ func checkPointInRectangle(originScope [][]float64, rectangle [][]float64) [][]f
 	pointList := CheckIntersection(originScope, rectangle)
 	if len(pointList) > 0 {
 		// 判断是否是顶点
-		times := 0
+		inRectangle := false
 		for i := 0; i < len(originScope)-1; i++ {
 			if flag := InPolygon(originScope[i], rectangle); flag {
-				times ++
-				fmt.Println(rectangle)
-				fmt.Println(flag,len(pointList))
+				inRectangle = true
+				polygon = append(polygon,originScope[i])
+
 			}
 		}
-		// 只有一个交点,并且有个点在四边形内
-		if len(pointList) == 1 && times == 1 {
-			fmt.Println("fuck")
+
+		if inRectangle {
+			// 判断交点是否在线段内
+			for i := 0; i < len(pointList); i++ {
+				for ii := 0; ii < len(originScope)-1; ii++ {
+					jj := ii + 1
+					flag := checkPointInLine(pointList[i], originScope[ii], originScope[jj])
+					if flag{
+						polygon = append(polygon, pointList[i])
+					}
+
+				}
+
+			}
+		}else{
+			polygon = append(polygon, pointList...)
 		}
 
-		polygon = append(polygon, pointList...)
 		// 多边形的四个点是否在矩形内,最后一个点不要判断
 		for i := 0; i < len(rectangle)-1; i++ {
 			if flag := InPolygon(rectangle[i], originScope); flag {
 				// 如果命中的话
 				polygon = append(polygon, rectangle[i])
+				//fmt.Println(rectangle[i])
 			}
 		}
 
