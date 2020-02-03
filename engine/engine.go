@@ -187,10 +187,10 @@ func PolygonContains(box geohash.Box, isOpen bool) {
 			Scope: result,
 		}
 	} else {
-		//gridInfo = GridInfo{
-		//	Scope: rectangle,
-		//}
-		return
+		gridInfo = GridInfo{
+			Scope: rectangle,
+		}
+		//return
 	}
 
 	geographicEngine.GridList = append(geographicEngine.GridList, gridInfo)
@@ -224,7 +224,7 @@ func checkPointInLine(point []float64, pointA []float64, pointB []float64) bool 
 
 }
 
-// 检查内
+// 检查点是否在矩形内部
 func checkPointInRectangle(originScope [][]float64, rectangle [][]float64) [][]float64 {
 	// 1.先判断是否有交点
 	// 2.有的话看点是否在圈内

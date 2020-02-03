@@ -3,6 +3,7 @@ package engine
 import (
 	"strings"
 	"fmt"
+	"github.com/mmcloughlin/geohash"
 )
 
 // 生成js字符串
@@ -73,7 +74,7 @@ func PointCmp(pointA []float64, pointB []float64, center []float64) bool {
 
 func ClockwiseSortPoints(polygon [][]float64) [][]float64 {
 	//计算重心
-	center := make([]float64,2)
+	center := make([]float64, 2)
 	x := float64(0)
 	y := float64(0)
 	for i := 0; i < len(polygon); i++ {
@@ -94,4 +95,22 @@ func ClockwiseSortPoints(polygon [][]float64) [][]float64 {
 		}
 	}
 	return polygon
+}
+
+func GenerateGeohash(point []float64, level int) {
+	// 生成geohash值
+	originGeoHash := geohash.Encode(point[1], point[0])
+	fmt.Println(originGeoHash)
+	// 得到geohash对应等级的scope
+	box := geohash.BoundingBox(originGeoHash[:level])
+	result := generatesJsFile(generate(box))
+	fmt.Printf("geohash center part:=%v \n", result)
+	// 得到geohash的8个neighbors
+	str := geohash.Neighbors(originGeoHash[:level])
+	for _, v := range str {
+		// 获取neighbors的scope
+		box := geohash.BoundingBox(v)
+		result := generatesJsFile(generate(box))
+		fmt.Printf("geohash scope part:=%v \n", result)
+	}
 }
